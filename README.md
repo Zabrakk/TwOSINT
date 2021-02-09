@@ -1,2 +1,18 @@
-# TwOSINT
-TwOSINT - Twitter OSINT
+# TwOSINT - Twitter OSINT tool
+
+### Providing API Bearer Token:
+The API bearer token can be provided with any of the following ways:
+
+Command line argument:
+```bash
+$ python3 TwOSINT.py -t <bearer_token>
+```
+Environment variable:
+```bash
+$ export BEARER_TOKEN=<bearer_token>
+```
+bearer_token.txt file:
+```
+bearer_token=<bearer_token>
+```
+As input when prompted to enter the bearer token
