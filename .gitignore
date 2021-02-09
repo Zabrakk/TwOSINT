@@ -1,1 +1,3 @@
-auth.txt
+.idea
+__pycache__
+bearer_token.txt
