@@ -8,11 +8,11 @@ class Authentication:
     """
 
     def __init__(self):
-        self.logger = logging.getLogger('Authentication')
-        self.logger.info('Initialized')
+        self.__logger = logging.getLogger('Authentication')
+        self.__logger.info('Initialized')
         self.bearer = None
 
-    def get_token(self, args_token):
+    def get_token(self, args_token: str):
         """
         Tries to find the bearer token from one of the possible ways to provide it
         :param args_token: Possible token from command line argument
@@ -21,17 +21,17 @@ class Authentication:
         if args_token:
             # From command line
             self.bearer = args_token
-            self.logger.info('Bearer token provided from command line')
+            self.__logger.info('Bearer token provided from command line')
         elif 'BEARER_TOKEN' in os.environ:
             # From environment variable
             self.bearer = os.environ['BEARER_TOKEN']
-            self.logger.info('Bearer token obtained from BEARER_TOKEN environment variable')
+            self.__logger.info('Bearer token obtained from BEARER_TOKEN environment variable')
         if not self.bearer:
             self.bearer = self.from_file()
         if not self.bearer:
             self.bearer = self.from_input()
         if not self.bearer:
-            self.logger.info('No bearer token was obtained')
+            self.__logger.info('No bearer token was obtained')
             return False
         print('Bearer token selected')
         return True
@@ -47,17 +47,17 @@ class Authentication:
             token = auth_file.read().split('=')[1]
             auth_file.close()
             if len(token) < 1:
-                self.logger.info('bearer_token.txt not found in file')
+                self.__logger.info('bearer_token.txt not found in file')
                 return None
-            self.logger.info('Bearer token read from bearer_token.txt')
+            self.__logger.info('Bearer token read from bearer_token.txt')
         except FileNotFoundError:
             # Authentication file not found
-            self.logger.info('bearer_token.txt not found, creating it')
+            self.__logger.info('bearer_token.txt not found, creating it')
             self.create_auth_file()
             return None
         except IndexError:
             # Incorrect file formatting
-            self.logger.info('Bearer token not found in bearer_token.txt')
+            self.__logger.info('Bearer token not found in bearer_token.txt')
             return None
         return token
 
@@ -69,9 +69,9 @@ class Authentication:
         token = None
         token = input('Enter your Bearer Token: ')
         if not token:
-            self.logger.info('User did not input a bearer token')
+            self.__logger.info('User did not input a bearer token')
             return None
-        self.logger.info('Bearer token obtained from user input')
+        self.__logger.info('Bearer token obtained from user input')
         return token
 
     def create_auth_file(self):
@@ -82,9 +82,9 @@ class Authentication:
         try:
             open('bearer_token.txt', 'w').write('bearer_token=')
         except Exception as e:
-            self.logger.info('Failed to create bearer_token. Error was {}'.format(e))
+            self.__logger.info('Failed to create bearer_token. Error was {}'.format(e))
             return
-        self.logger.info('bearer_token.txt created')
+        self.__logger.info('bearer_token.txt created')
 
     def get_header(self):
         """
@@ -92,7 +92,7 @@ class Authentication:
         :return: Header or None if no bearer token was provided
         """
         if not self.bearer:
-            self.logger.info('Can\'t return authentication header. Bearer token not available')
+            self.__logger.info('Can\'t return authentication header. Bearer token not available')
             return None
-        self.logger.info('Returning authentication header')
+        self.__logger.info('Returning authentication header')
         return {'Authorization': 'Bearer {}'.format(self.bearer)}
