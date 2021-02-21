@@ -12,10 +12,11 @@ class Authentication:
         self.__logger.info('Initialized')
         self.bearer = None
 
-    def get_token(self, args_token: str):
+    def get_token(self, args_token: str, filename: str = 'bearer_token.txt'):
         """
         Tries to find the bearer token from one of the possible ways to provide it
         :param args_token: Possible token from command line argument
+        :param filename: Bearer token text file name/relative location
         :return: True if bearer token was found; False otherwise
         """
         if args_token:
@@ -27,7 +28,7 @@ class Authentication:
             self.bearer = os.environ['BEARER_TOKEN']
             self.__logger.info('Bearer token obtained from BEARER_TOKEN environment variable')
         if not self.bearer:
-            self.bearer = self.from_file()
+            self.bearer = self.from_file(filename)
         if not self.bearer:
             self.bearer = self.from_input()
         if not self.bearer:
@@ -36,14 +37,15 @@ class Authentication:
         print('Bearer token selected')
         return True
 
-    def from_file(self):
+    def from_file(self, filename: str):
         """
         Attempts to read the bearer token from bearer_token.txt
+        :param filename: Bearer token text file name/relative location
         :return: Bearer token or None if not found
         """
         token = None
         try:
-            auth_file = open('bearer_token.txt', 'r')
+            auth_file = open(filename, 'r')
             token = auth_file.read().split('=')[1]
             auth_file.close()
             if len(token) < 1:
@@ -53,7 +55,7 @@ class Authentication:
         except FileNotFoundError:
             # Authentication file not found
             self.__logger.info('bearer_token.txt not found, creating it')
-            self.create_auth_file()
+            self.create_auth_file(filename)
             return None
         except IndexError:
             # Incorrect file formatting
@@ -74,13 +76,14 @@ class Authentication:
         self.__logger.info('Bearer token obtained from user input')
         return token
 
-    def create_auth_file(self):
+    def create_auth_file(self, filename: str):
         """
         Creates bearer_token.txt if its missing
+        :param filename: Bearer token text file name/relative location
         :return: Nothing
         """
         try:
-            open('bearer_token.txt', 'w').write('bearer_token=')
+            open(filename, 'w').write('bearer_token=')
         except Exception as e:
             self.__logger.info('Failed to create bearer_token. Error was {}'.format(e))
             return
