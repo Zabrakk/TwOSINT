@@ -101,9 +101,11 @@ def test_update_url_results_num():
     assert '?max_results={}'.format(new_num_to_get) in api_handler.update_url_results_num(url, old_num_to_get, new_num_to_get)[0]
     url = api_handler.create_get_tweets_url('123', old_num_to_get, retweets=False, start_time='2015-10-10T10:10:01Z')
     assert '?max_results={}&'.format(new_num_to_get) in api_handler.update_url_results_num(url, old_num_to_get, new_num_to_get)[0]
+    assert api_handler.update_url_results_num(url, old_num_to_get, new_num_to_get)[1] == 7
     new_num_to_get = 4
     url = api_handler.create_get_tweets_url('123', old_num_to_get)
     assert '?max_results={}'.format(5) in api_handler.update_url_results_num(url, old_num_to_get, new_num_to_get)[0]
+    assert api_handler.update_url_results_num(url, old_num_to_get, new_num_to_get)[1] == 5
 
 
 def test_update_pagination_token():
