@@ -1,3 +1,4 @@
+import re
 import json
 import time
 import logging
@@ -6,8 +7,7 @@ import requests
 from src.authentication import Authentication
 
 # TODO: Handling for different failures
-# TODO: Allow exclusion of retweets...
-# TODO: Add separate URL creation functions
+
 
 class APIHandler:
     """
@@ -29,10 +29,8 @@ class APIHandler:
         """
         print('Fetching profile data for {}...'.format(username))
         self.__logger.info('Fetching profile data for {}'.format(username))
-        # Create request URL
-        url = self.base_url + 'users/by/username/' + username
-        # Specify additional information to obtain
-        url += '?user.fields=id,name,description,created_at,location,profile_image_url,public_metrics,verified'
+        # Obtain the request URL
+        url = self.create_get_profile_url(username)
         self.__logger.info('Calling {}'.format(url))
         # Send the GET request
         response = requests.get(url, headers=auth.get_header())
@@ -45,43 +43,29 @@ class APIHandler:
         self.__logger.info('Request completed, profile info obtained')
         return response.json()
 
-    def get_tweets(self, user_id: str, auth: Authentication, max_tweets: int = 5):
+    def get_tweets(self, user_id: str, auth: Authentication, max_tweets: int = 5, retweets: bool = True,
+                   replies: bool = True, start_time: str = None, end_time: str = None):
         """
         Calls /2/users/{id}/tweets to obtain tweets from the specified user. Can get max 3200, and minimum 5 tweets.
         API call documentation:
             https://developer.twitter.com/en/docs/twitter-api/tweets/timelines/api-reference/get-users-id-tweets
-        :param user_id: ID of the user
-        :param auth: Authentication object with token
-        :param max_tweets: How many tweets to fetch. Defaults to 20
-        :return: JSON with tweets; None if failed
+        SETTING EXCLUDE REPLIES MAKE ONLY 800 NEWEST TWEETS AVAILABLE
+        :param user_id: Target user's ID
+        :param auth: Authentication object
+        :param max_tweets: Maximum number of tweets to obtain. Minimum 5, maximum 3200
+        :param retweets: Include retweets (True or False)
+        :param replies: Include replies (True or False). Setting this to true limits number of tweets to 800
+        :param start_time: Obtain tweets posted after this time. Format is "YYYY-mm-ddThh:mm:ssZ"
+        :param end_time: Obtain tweets posted before this time. Format is "YYYY-mm-ddThh:mm:ssZ"
+        :return: JSON object with tweets or None if call failed
         """
-        num_to_get = max_tweets
-        if max_tweets < 5:
-            print('Can\'t request less than 5 tweets ==> Defaulting to 5')
-            self.__logger.info('User requested less than 5 tweets, defaulting to 5')
-            max_tweets = 5
-            num_to_get = 5
-        elif max_tweets > 3200:
-            print('Request exceeds the 3200 tweet limit ==> Defaulting to maximum 3200')
-            self.__logger.info('User requested more than 3200 tweets, defaulting to 3200')
-            max_tweets = 3200
-        if max_tweets > 100:
-            # Can only get a maximum of 100 tweets at once
-            num_to_get = 100
+        max_tweets, num_to_get = self.decide_num_to_get(max_tweets, replies)
         print('Fetching tweets...')
         self.__logger.info('Fetching up to {} tweets for {}'.format(max_tweets, user_id))
         # Create request URL
-        url = self.base_url + 'users/{}/tweets?max_results={}&'.format(user_id, num_to_get) # num_to_get
-        # Specify additional information to obtain
-        # Expansions
-        url += 'expansions=referenced_tweets.id,attachments.media_keys&'
-        # Basic info
-        url += 'tweet.fields=author_id,text,created_at,lang,public_metrics,in_reply_to_user_id,geo&'
-        # Location
-        url += 'place.fields=country,name,place_type,geo&'
-        # Media
-        url += 'media.fields=type,preview_image_url,url'
-
+        url = self.create_get_tweets_url(user_id, num_to_get, retweets, replies, start_time, end_time)
+        if url is None:
+            return None
         # Response data is stored here
         data = {
             'tweets': [],
@@ -100,16 +84,7 @@ class APIHandler:
                 return None
             # API call done, parse data
             response_json = response.json()
-            data['tweets'] += response_json['data']
-            # These fields may not always exist
-            try:
-                data['others_tweets'] += response_json['tweets']
-            except KeyError:
-                pass
-            try:
-                data['includes'] += response_json['includes']
-            except KeyError:
-                pass
+            data = self.append_response_json(data, response_json)
             print(f'Tweets obtained: {len(data["tweets"])}')
             # Check if we should stop
             if 'next_token' not in response_json['meta'].keys():
@@ -117,16 +92,142 @@ class APIHandler:
             # Sleep for a little while
             time.sleep(0.5)
             # Add pagination token to url
-            if 'pagination_token' not in url:
-                url += '&pagination_token=' + response_json['meta']['next_token']
-            else:
-                url = url[:url.rfind('&')]
-                url += '&pagination_token=' + response_json['meta']['next_token']
+            url = self.update_pagination_token(url, response_json['meta']['next_token'])
             # Check if number of tweets to get should be changed
-            print()
             if max_tweets - len(data['tweets']) < num_to_get:
-                url = url.split('max_results={}'.format(num_to_get))
-                url = url[0] + 'max_results={}'.format(max_tweets-len(data['tweets'])) + url[1]
+                url, num_to_get = self.update_url_results_num(url, num_to_get, max_tweets-len(data['tweets']))
 
         print('Tweets loaded')
+        return data
+
+    def create_get_profile_url(self, username: str):
+        """
+        Creates the URL used for obtaining a Twitter user's profile
+        :param username: Target user
+        :return: The API call
+        """
+        url = self.base_url + 'users/by/username/' + username
+        url += '?user.fields=id,name,description,created_at,location,url,profile_image_url,public_metrics,verified'
+        return url
+
+    def decide_num_to_get(self, max_tweets: int, include_replies: bool = True):
+        """
+        Decides how many tweets get_tweets() should obtain in total and how many per one request
+        :param max_tweets: Number of tweets user wants to get
+        :param include_replies: Are replies included (True or False). max_tweets limited to 800 if set to False
+        :return: max_tweets <= 3200 & num_to_get <= 100. Alternatively, returns None,None if max_tweets is not an integer
+        """
+        try:
+            max_tweets = int(max_tweets)
+        except ValueError:
+            return None, None
+        if not include_replies and max_tweets > 800:
+            print('Replies excluded, can\'t request more than 800 tweets ==> Defaulting to 800')
+            max_tweets = 800
+        if max_tweets < 5:
+            print('Can\'t request less than 5 tweets ==> Defaulting to 5')
+            return 5, 5
+        elif max_tweets <= 100:
+            return max_tweets, max_tweets
+        elif max_tweets > 3200:
+            print('Can\'t request more than 3200 tweets ==> Defaulting to 3200')
+            return 3200, 100
+        return max_tweets, 100
+
+    def check_time_format(self, time_str: str):
+        """
+        Ensures that the "YYYY-mm-ddThh:mm:ssT" format is used for timestamps
+        :param time_str: Datetime as string
+        :return: True if correct; False otherwise
+        """
+        if re.search(r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z", time_str):
+            return True
+        return False
+
+    def create_get_tweets_url(self, user_id: str, num_to_get: int, retweets: bool = True, replies: bool = True, start_time: str = None, end_time: str = None):
+        """
+        Generates the API call URL used to obtain tweets
+        :param user_id: Target user's ID
+        :param num_to_get: Number of tweets to obtain per call
+        :param retweets: Include retweets (True or False)
+        :param replies: Include replies (True or False
+        :param start_time: Obtain tweets posted after this time. Format is "YYYY-mm-ddThh:mm:ssZ"
+        :param end_time: Obtain tweets posted before this time. Format is "YYYY-mm-ddThh:mm:ssZ"
+        :return:
+        """
+        url = self.base_url + 'users/{}/tweets?max_results={}&'.format(user_id, num_to_get)
+        # Add expansions
+        url += 'expansions=author_id,in_reply_to_user_id,referenced_tweets.id,referenced_tweets.id.author_id,attachments.media_keys&'
+        # Tweet fields
+        url += 'tweet.fields=author_id,text,attachments,created_at,entities,geo,in_reply_to_user_id,lang,public_metrics,referenced_tweets&'
+        # Media fields
+        url += 'media.fields=url,preview_image_url,media_key&'
+        if not retweets and not replies:
+            url += 'exclude=retweets,replies&'
+        elif not retweets:
+            url += 'exclude=retweets&'
+        elif not replies:
+            url += 'exclude=replies&'
+        if start_time:
+            if self.check_time_format(start_time):
+                url += 'start_time={}&'.format(start_time)
+            else:
+                print('Invalid start_time format! Use YYYY-mm-ddThh:mm:ssZ')
+                return None
+        if end_time:
+            if self.check_time_format(end_time):
+                url += 'end_time={}&'.format(end_time)
+            else:
+                print('Invalid end_time format! Use YYYY-mm-ddThh:mm:ssZ')
+                return None
+        # Remove trailing '&'
+        return url[:-1]
+
+    def update_url_results_num(self, url: str, old_num_to_get: int, new_num_to_get: int):
+        """
+        Updates the number of tweets obtained per API call
+        :param url: API call URL
+        :param old_num_to_get: Old number of tweets
+        :param new_num_to_get: New number of tweets
+        :return: URL with max_results set to new number of tweets
+        """
+        url = url.split('max_results={}'.format(old_num_to_get))
+        if new_num_to_get < 5:
+            new_num_to_get = 5
+        url = url[0] + 'max_results={}'.format(new_num_to_get) + url[1]
+        return url, new_num_to_get
+
+    def update_pagination_token(self, url: str, pagination_token: str):
+        """
+        Updates the pagination token in the API call url
+        :param url: API call URL
+        :param pagination_token: New pagination token
+        :return: URL with new token
+        """
+        if 'pagination_token' not in url:
+            url += '&pagination_token={}'.format(pagination_token)
+        else:
+            # Remove old pagination token
+            url = url[:url.rfind('&')]
+            # Add new one
+            url += '&pagination_token={}'.format(pagination_token)
+        return url
+
+    def append_response_json(self, data: list, response_json: list):
+        """
+        Concatenates the response from Twitter to existing data
+        :param data: Local response data
+        :param response_json: Response from Twitter
+        :return: Local data combined with the Twitter response
+        """
+        data['tweets'] += response_json['data']
+        # These fields may not always exist
+        try:
+            data['others_tweets'] += response_json['tweets']
+        except KeyError:
+            pass
+        try:
+            data['includes'] += response_json['includes']
+        except KeyError:
+            pass
         return data
