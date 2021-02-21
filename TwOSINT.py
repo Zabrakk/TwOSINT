@@ -26,3 +26,6 @@ if __name__ == '__main__':
         data = APIHandler().get_profile('twitter', auth)
         if data:
             open('report.json', 'w').write(json.dumps(data, indent=4))
+        data = APIHandler().get_tweets('783214', auth, 100)
+        if data:
+            open('tweets.json', 'w').write(json.dumps(data, indent=4))
