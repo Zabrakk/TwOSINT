@@ -1,6 +1,6 @@
 # TwOSINT - Twitter OSINT tool
 
-### Providing API Bearer Token:
+### Providing API Bearer Token
 The API bearer token can be provided with any of the following ways:
 
 Command line argument:
@@ -16,3 +16,9 @@ bearer_token.txt file:
 bearer_token=<bearer_token>
 ```
 As input when prompted to enter the bearer token
+
+### Running Tests
+Tests can be ran with the commnd:
+```bash
+$ python3 -m pytest
+```
