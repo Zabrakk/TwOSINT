@@ -10,31 +10,39 @@ class Authentication:
     def __init__(self):
         self.__logger = logging.getLogger('Authentication')
         self.__logger.info('Initialized')
-        self.bearer = None
+        self.token = None
 
     def get_token(self, args_token: str, filename: str = 'bearer_token.txt'):
         """
-        Tries to find the bearer token from one of the possible ways to provide it
+        Tries to find the bearer token from one of the possible ways.
         :param args_token: Possible token from command line argument
         :param filename: Bearer token text file name/relative location
         :return: True if bearer token was found; False otherwise
         """
+        store_to_file = True
         if args_token:
             # From command line
-            self.bearer = args_token
+            self.token = args_token
             self.__logger.info('Bearer token provided from command line')
         elif 'BEARER_TOKEN' in os.environ:
             # From environment variable
-            self.bearer = os.environ['BEARER_TOKEN']
+            self.token = os.environ['BEARER_TOKEN']
             self.__logger.info('Bearer token obtained from BEARER_TOKEN environment variable')
-        if not self.bearer:
-            self.bearer = self.from_file(filename)
-        if not self.bearer:
-            self.bearer = self.from_input()
-        if not self.bearer:
+        if not self.token:
+            # From .txt file
+            self.token = self.from_file(filename)
+            if self.token:
+                store_to_file = False
+        if not self.token:
+            # From user input prompt
+            self.token = self.from_input()
+        if not self.token:
             self.__logger.info('No bearer token was obtained')
             return False
-        print('Bearer token selected')
+        # Save token in file for convenience
+        # TODO: Provide option to not save token
+        if store_to_file:
+            self.store_token_to_file(filename, self.token)
         return True
 
     def from_file(self, filename: str):
@@ -55,7 +63,6 @@ class Authentication:
         except FileNotFoundError:
             # Authentication file not found
             self.__logger.info('bearer_token.txt not found, creating it')
-            self.create_auth_file(filename)
             return None
         except IndexError:
             # Incorrect file formatting
@@ -63,7 +70,7 @@ class Authentication:
             return None
         return token
 
-    def from_input(self):
+    def from_input(self) -> str or None:
         """
         Prompts user to input their bearer token
         :return: Token or none if not provided
@@ -76,26 +83,36 @@ class Authentication:
         self.__logger.info('Bearer token obtained from user input')
         return token
 
-    def create_auth_file(self, filename: str):
+    def store_token_to_file(self, filename: str, token: str) -> None:
         """
-        Creates bearer_token.txt if its missing
-        :param filename: Bearer token text file name/relative location
-        :return: Nothing
+        Stores the bearer token to a text file. Also creates the token storage file.
+        :param filename: Name of the bearer token storage file
+        :param token: Bearer token
+        :return: None
         """
         try:
-            open(filename, 'w').write('bearer_token=')
+            f = open(filename, 'w')
+            f.write('bearer_token={}'.format(token))
+            f.close()
         except Exception as e:
-            self.__logger.info('Failed to create bearer_token. Error was {}'.format(e))
+            self.__logger.info('Failed to store bearer token. Error was {}'.format(e))
             return
-        self.__logger.info('bearer_token.txt created')
+        self.__logger.info('Bearer token saved to {}'.format(filename))
 
-    def get_header(self):
+    def token_found(self) -> bool:
+        """
+        Tells whether or not the bearer token was found
+        :return: True if token was obtained; False otherwise
+        """
+        return self.token is not None
+
+    def get_header(self) -> dict or None:
         """
         Provides the Authentication header for API calls
         :return: Header or None if no bearer token was provided
         """
-        if not self.bearer:
-            self.__logger.info('Can\'t return authentication header. Bearer token not available')
+        if not self.token:
+            self.__logger.info("Can't return authentication header. Bearer token not available")
             return None
         self.__logger.info('Returning authentication header')
-        return {'Authorization': 'Bearer {}'.format(self.bearer)}
+        return {'Authorization': 'Bearer {}'.format(self.token)}

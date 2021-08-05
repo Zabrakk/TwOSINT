@@ -18,14 +18,14 @@ class APIHandler:
         self.__logger = logging.getLogger('API_Handler')
         self.base_url = 'https://api.twitter.com/2/'
 
-    def get_profile(self, username: str, auth: Authentication):
+    def get_profile(self, username: str, auth: Authentication) -> dict or None:
         """
         Calls /2/users/by/username/{username} to obtain basic info about the given user.
         API call documentation:
             https://developer.twitter.com/en/docs/twitter-api/users/lookup/api-reference/get-users-by-username-username
-        :param username: Targets Twitter @ username
+        :param username: Targets Twitter @ username (handle)
         :param auth: Authentication object with token
-        :return: JSON with profile info; None if failed
+        :return: JSON with profile info or None if failed
         """
         print('Fetching profile data for {}...'.format(username))
         self.__logger.info('Fetching profile data for {}'.format(username))
@@ -39,9 +39,15 @@ class APIHandler:
             print('Failed to load profile! Check logs for more info')
             self.__logger.info('Request failed. Error code: {}. Message: {}'.format(response.status_code, response.text))
             return None
+        # Extract the JSON response
+        data = response.json()
+        # Check JSON for errors
+        if self.check_raised_error(data):
+            return None
         # API call done
+        print('Done loading profile data')
         self.__logger.info('Request completed, profile info obtained')
-        return response.json()
+        return response.json()['data']
 
     def get_tweets(self, user_id: str, auth: Authentication, max_tweets: int = 5, retweets: bool = True,
                    replies: bool = True, start_time: str = None, end_time: str = None):
@@ -97,10 +103,29 @@ class APIHandler:
             if max_tweets - len(data['tweets']) < num_to_get:
                 url, num_to_get = self.update_url_results_num(url, num_to_get, max_tweets-len(data['tweets']))
 
-        print('Tweets loaded')
+        print('Done loading tweets')
         return data
 
-    def create_get_profile_url(self, username: str):
+    def append_response_json(self, data: list, response_json: list):
+        """
+        Concatenates the response from Twitter to existing data
+        :param data: Local response data
+        :param response_json: Response from Twitter
+        :return: Local data combined with the Twitter response
+        """
+        data['tweets'] += response_json['data']
+        # These fields may not always exist
+        try:
+            data['others_tweets'] += response_json['tweets']
+        except KeyError:
+            pass
+        try:
+            data['includes'] += response_json['includes']
+        except KeyError:
+            pass
+        return data
+
+    def create_get_profile_url(self, username: str) -> str:
         """
         Creates the URL used for obtaining a Twitter user's profile
         :param username: Target user
@@ -110,41 +135,7 @@ class APIHandler:
         url += '?user.fields=id,name,description,created_at,location,url,profile_image_url,public_metrics,verified'
         return url
 
-    def decide_num_to_get(self, max_tweets: int, include_replies: bool = True):
-        """
-        Decides how many tweets get_tweets() should obtain in total and how many per one request
-        :param max_tweets: Number of tweets user wants to get
-        :param include_replies: Are replies included (True or False). max_tweets limited to 800 if set to False
-        :return: max_tweets <= 3200 & num_to_get <= 100. Alternatively, returns None,None if max_tweets is not an integer
-        """
-        try:
-            max_tweets = int(max_tweets)
-        except ValueError:
-            return None, None
-        if not include_replies and max_tweets > 800:
-            print('Replies excluded, can\'t request more than 800 tweets ==> Defaulting to 800')
-            max_tweets = 800
-        if max_tweets < 5:
-            print('Can\'t request less than 5 tweets ==> Defaulting to 5')
-            return 5, 5
-        elif max_tweets <= 100:
-            return max_tweets, max_tweets
-        elif max_tweets > 3200:
-            print('Can\'t request more than 3200 tweets ==> Defaulting to 3200')
-            return 3200, 100
-        return max_tweets, 100
-
-    def check_time_format(self, time_str: str):
-        """
-        Ensures that the "YYYY-mm-ddThh:mm:ssT" format is used for timestamps
-        :param time_str: Datetime as string
-        :return: True if correct; False otherwise
-        """
-        if re.search(r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z", time_str):
-            return True
-        return False
-
-    def create_get_tweets_url(self, user_id: str, num_to_get: int, retweets: bool = True, replies: bool = True, start_time: str = None, end_time: str = None):
+    def create_get_tweets_url(self, user_id: str, num_to_get: int, retweets: bool = True, replies: bool = True, start_time: str = None, end_time: str = None) -> str:
         """
         Generates the API call URL used to obtain tweets
         :param user_id: Target user's ID
@@ -153,7 +144,7 @@ class APIHandler:
         :param replies: Include replies (True or False
         :param start_time: Obtain tweets posted after this time. Format is "YYYY-mm-ddThh:mm:ssZ"
         :param end_time: Obtain tweets posted before this time. Format is "YYYY-mm-ddThh:mm:ssZ"
-        :return:
+        :return: URL for get tweets API call
         """
         url = self.base_url + 'users/{}/tweets?max_results={}&'.format(user_id, num_to_get)
         # Add expansions
@@ -213,21 +204,49 @@ class APIHandler:
             url += '&pagination_token={}'.format(pagination_token)
         return url
 
-    def append_response_json(self, data: list, response_json: list):
+    def decide_num_to_get(self, max_tweets: int, include_replies: bool = True):
         """
-        Concatenates the response from Twitter to existing data
-        :param data: Local response data
-        :param response_json: Response from Twitter
-        :return: Local data combined with the Twitter response
+        Decides how many tweets get_tweets() should obtain in total and how many per one request
+        :param max_tweets: Number of tweets user wants to get
+        :param include_replies: Are replies included (True or False). max_tweets limited to 800 if set to False
+        :return: max_tweets <= 3200 & num_to_get <= 100. Alternatively, returns None,None if max_tweets is not an integer
         """
-        data['tweets'] += response_json['data']
-        # These fields may not always exist
         try:
-            data['others_tweets'] += response_json['tweets']
-        except KeyError:
-            pass
-        try:
-            data['includes'] += response_json['includes']
-        except KeyError:
-            pass
-        return data
+            max_tweets = int(max_tweets)
+        except ValueError:
+            return None, None
+        if not include_replies and max_tweets > 800:
+            print('Replies excluded, can\'t request more than 800 tweets ==> Defaulting to 800')
+            max_tweets = 800
+        if max_tweets < 5:
+            print('Can\'t request less than 5 tweets ==> Defaulting to 5')
+            return 5, 5
+        elif max_tweets <= 100:
+            return max_tweets, max_tweets
+        elif max_tweets > 3200:
+            print('Can\'t request more than 3200 tweets ==> Defaulting to 3200')
+            return 3200, 100
+        return max_tweets, 100
+
+    def check_raised_error(self, j: dict) -> bool:
+        """
+        Checks whether or not an error occurred based on the response json
+        :param j: Response JSON
+        :return: True if error occurred; False otherwise
+        """
+        if 'errors' in j.keys():
+            for entry in j['errors']:
+                print('The following error occurred: {}'.format(entry['detail']))
+                self.__logger.info('Twitter responded with the following error:\n\tTitle: {}, Message: {}'.format(entry['title'], entry['detail']))
+            return True
+        return False
+
+    def check_time_format(self, time_str: str):
+        """
+        Ensures that the "YYYY-mm-ddThh:mm:ssT" format is used for timestamps
+        :param time_str: Datetime as string
+        :return: True if correct; False otherwise
+        """
+        if re.search(r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z", time_str):
+            return True
+        return False
