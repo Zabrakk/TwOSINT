@@ -79,6 +79,7 @@ class APIHandler:
             'includes': []
         }
         response = None
+        first_iteration = True
         while len(data['tweets']) < max_tweets:
             self.__logger.info('Calling {}'.format(url))
             # Send the GET request
@@ -90,6 +91,11 @@ class APIHandler:
                 return None
             # API call done, parse data
             response_json = response.json()
+            # Check if tweets were found during the first iteration
+            if first_iteration and response_json['meta']['result_count'] == 0:
+                print('No tweets found for the target')
+                return {'empty': True}
+            first_iteration = False
             data = self.append_response_json(data, response_json)
             print(f'Tweets obtained: {len(data["tweets"])}')
             # Check if we should stop
@@ -104,7 +110,7 @@ class APIHandler:
                 url, num_to_get = self.update_url_results_num(url, num_to_get, max_tweets-len(data['tweets']))
 
         print('Done loading tweets')
-        return data
+        return data['tweets']
 
     def append_response_json(self, data: list, response_json: list):
         """
@@ -113,6 +119,8 @@ class APIHandler:
         :param response_json: Response from Twitter
         :return: Local data combined with the Twitter response
         """
+        print(data)
+        print(response_json)
         data['tweets'] += response_json['data']
         # These fields may not always exist
         try:

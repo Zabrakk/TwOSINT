@@ -21,7 +21,7 @@ class Save:
 
     def to_csv(self, profile: dict, tweets: dict, filename: str) -> None:
         """
-        Saves the fetched Twitter profile and its tweets to a csv file.
+        Saves the fetched Twitter profile and its tweets to TWO different csv file.
         Note: This will overwrite files!
         :param profile: Profile fetched with api_handler.get_profile()
         :param tweets: Tweets fetched with api_handler.get_tweets()
@@ -29,8 +29,14 @@ class Save:
         :return: None
         """
         filename = self._add_file_extension(filename, 'csv')
-        # Open / create the report file
-        with open(filename, 'w', newline='', encoding='utf-8') as f:
+        profile_file = filename[:-4]+'_profile'+filename[-4:]
+        tweet_file = filename[:-4]+'_tweets'+filename[-4:]
+        if tweets == {'emptry': True}: # TODO: FIX THIS THING
+            print('Saving profile=>{}'.format(profile_file))
+        else:
+            print('Saving profile=>{} and tweets=>{}'.format(profile_file, tweet_file))
+        # Save profile info
+        with open(profile_file, 'w', newline='', encoding='utf-8') as f:
             # Create the csv writer
             w = csv.writer(f)
             w.writerows(
@@ -45,12 +51,18 @@ class Save:
                     ['Following:', profile['public_metrics']['following_count']]
                 ]
             )
-            # Add empty row
-            w.writerow([''])
-            # Tweet column names
-            w.writerow([''])
+        # Save tweets
+        if tweets != {'emptry': True}: # TODO: FIX THIS THING
+            with open(tweet_file, 'w', newline='', encoding='utf-8') as f:
+                w = csv.writer(f)
+                columns = ['Tweeted at', 'Text', 'Retweets', 'Replies', 'Coordinates']
+                w.writerow(columns)
+                for tweet in tweets:
+                    w.writerow([tweet['created_at'], tweet['text'].replace('\n', ' ').replace(',', '').replace(';', ':'),
+                                tweet['public_metrics']['retweet_count'], tweet['public_metrics']['reply_count'],
+                                tweet['geo']['coordinates']['coordinates'] if 'geo' in tweet.keys() and 'coordinates' in tweet['geo'].keys() else None])
 
-
+        print('Done saving!')
 
 
 
