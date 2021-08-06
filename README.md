@@ -9,7 +9,8 @@ $ python3 TwOSINT.py -t <bearer_token>
 ```
 Environment variable:
 ```bash
-$ export BEARER_TOKEN=<bearer_token>
+$ export BEARER_TOKEN=<bearer_token>    # Linux
+$ set BEARER_TOKEN=<bearer_token>       # Windows
 ```
 bearer_token.txt file:
 ```
