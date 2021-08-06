@@ -1,6 +1,6 @@
 import re
-import json
 import time
+import shutil
 import logging
 import requests
 # TwOSINT files
@@ -45,9 +45,17 @@ class APIHandler:
         if self.check_raised_error(data):
             return None
         # API call done
+        data = response.json()['data']
+        data['followers'] = data['public_metrics']['followers_count']
+        data['following'] = data['public_metrics']['following_count']
+        data.pop('public_metrics', None)
+
+        # Download target's profile image
+        self._save_profile_image(username, data['profile_image_url'])
+
         print('Done loading profile data')
         self.__logger.info('Request completed, profile info obtained')
-        return response.json()['data']
+        return data
 
     def get_tweets(self, user_id: str, auth: Authentication, max_tweets: int = 5, retweets: bool = True,
                    replies: bool = True, start_time: str = None, end_time: str = None):
@@ -119,8 +127,6 @@ class APIHandler:
         :param response_json: Response from Twitter
         :return: Local data combined with the Twitter response
         """
-        print(data)
-        print(response_json)
         data['tweets'] += response_json['data']
         # These fields may not always exist
         try:
@@ -258,3 +264,18 @@ class APIHandler:
         if re.search(r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z", time_str):
             return True
         return False
+
+    def _save_profile_image(self, username: str, url: str) -> None:
+        """
+        Downloads target's Twitter profile image, so it can be added to the PDF
+        :param username: Twitter handle of target
+        :param url: URL of profile image
+        :return: Nothing
+        """
+        r = requests.get(url, stream=True)
+        if r.status_code == 200:
+            with open('reports/{}.jpg'.format(username), 'wb') as f:
+                self.__logger.info("Downloaded target's profile image")
+                shutil.copyfileobj(r.raw, f)
+        else:
+            self.__logger.info("Could not download target's profile image")

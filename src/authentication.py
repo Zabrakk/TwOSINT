@@ -7,19 +7,23 @@ class Authentication:
     Handles obtaining the Twitter API bearer token and providing the authentication header for API calls
     """
 
-    def __init__(self):
+    def __init__(self, save_token: bool):
+        """
+        Logging for Authentication
+        :param save_token: Should token be saved to bearer_token.txt?
+        """
         self.__logger = logging.getLogger('Authentication')
         self.__logger.info('Initialized')
         self.token = None
+        self.save_token = save_token
 
-    def get_token(self, args_token: str, filename: str = 'bearer_token.txt'):
+    def get_token(self, args_token: str, filename: str = 'bearer_token.txt') -> bool:
         """
         Tries to find the bearer token from one of the possible ways.
         :param args_token: Possible token from command line argument
         :param filename: Bearer token text file name/relative location
         :return: True if bearer token was found; False otherwise
         """
-        store_to_file = True
         if args_token:
             # From command line
             self.token = args_token
@@ -32,7 +36,7 @@ class Authentication:
             # From .txt file
             self.token = self.from_file(filename)
             if self.token:
-                store_to_file = False
+                self.save_token = False
         if not self.token:
             # From user input prompt
             self.token = self.from_input()
@@ -41,7 +45,7 @@ class Authentication:
             return False
         # Save token in file for convenience
         # TODO: Provide option to not save token
-        if store_to_file:
+        if self.save_token:
             self.store_token_to_file(filename, self.token)
         return True
 

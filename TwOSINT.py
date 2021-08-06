@@ -17,13 +17,19 @@ if __name__ == '__main__':
     parser = get_parser()
     args = parser.parse_args()
     # Get bearer token
-    auth = Authentication()
+    auth = Authentication(args.save_token)
     # Check that a bearer token is available
     auth.get_token(args.token)
+
+    # Set output filename to target if no output name was provided by user
+    if args.output is None:
+        args.output = args.target
 
     if not auth.token_found():
         print('A Bearer Token is required!')
     else:
+        # Create save object here, so reports/ is created
+        save = Save()
         api_handler = APIHandler()
         # Check that possible user provided start and end times are correct
         if args.start_time and not api_handler.check_time_format(args.start_time):
@@ -45,11 +51,10 @@ if __name__ == '__main__':
                                         replies=args.replies, start_time=args.start_time, end_time=args.end_time)
         if not tweets:
             sys.exit(1)
-        save = Save()
+        # Save results
         if args.format == 'csv':
             save.to_csv(profile, tweets, args.output)
-        #if data:
-        #    open('report.json', 'w').write(json.dumps(data, indent=4))
-        #data = APIHandler().get_tweets('1121526942', auth, 100)
-        #if data:
-        #    open('tweets.json', 'w').write(json.dumps(data, indent=4))
+        elif args.format == 'json':
+            save.to_json(profile, tweets, args.output)
+        else:
+            save.to_pdf(profile, tweets, args.output)
