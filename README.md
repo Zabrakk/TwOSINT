@@ -106,7 +106,7 @@ The image below illustrates what an example PDF report looks like:
 
 
 ### Running Tests
-Tests can be ran with the commnd:
+Tests can be ran with the command:
 ```bash
 $ python3 -m pytest test
 ```
