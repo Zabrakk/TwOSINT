@@ -25,6 +25,10 @@ if __name__ == '__main__':
     if args.output is None:
         args.output = args.target
 
+    if args.n not in range(5, 3201):
+        print('Set -n to be between 5-3200')
+        sys.exit(1)
+
     if not auth.token_found():
         print('A Bearer Token is required!')
     else:
