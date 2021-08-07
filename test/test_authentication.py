@@ -8,14 +8,14 @@ Tests the different functionalities of the Authentication class
 
 
 def test_from_arg():
-    auth = Authentication()
+    auth = Authentication(save_token=False)
     token = 'test_arg'
     assert auth.get_token(token)
     assert auth.get_header() == {'Authorization': 'Bearer {}'.format(token)}
 
 
 def test_from_environment():
-    auth = Authentication()
+    auth = Authentication(save_token=False)
     token = 'test_environment'
     old_val = None
     try:
@@ -31,17 +31,22 @@ def test_from_environment():
 
 
 def test_create_auth_file():
-    auth = Authentication()
     filename = 'test/test_auth_file.txt'
-    auth.create_auth_file(filename)
+    auth = Authentication(save_token=False)
+    auth.store_token_to_file(filename, 'token')
+    assert not os.path.exists(filename)
+
+    auth = Authentication(save_token=True)
+    auth.store_token_to_file(filename, 'token')
     assert os.path.exists(filename)
-    assert open(filename, 'r').read() == 'bearer_token='
+    with open(filename, 'r') as f:
+        assert f.read() == 'bearer_token=token'
     if os.path.exists(filename):
         os.remove(filename)
 
 
 def test_from_file():
-    auth = Authentication()
+    auth = Authentication(save_token=False)
     token = 'test_file'
     filename = 'test/test_auth_file.txt'
     open(filename, 'w').write('bearer_token={}'.format(token))

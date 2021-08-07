@@ -44,9 +44,7 @@ class Authentication:
             self.__logger.info('No bearer token was obtained')
             return False
         # Save token in file for convenience
-        # TODO: Provide option to not save token
-        if self.save_token:
-            self.store_token_to_file(filename, self.token)
+        self.store_token_to_file(filename, self.token)
         return True
 
     def from_file(self, filename: str):
@@ -94,6 +92,8 @@ class Authentication:
         :param token: Bearer token
         :return: None
         """
+        if not self.save_token:
+            return
         try:
             f = open(filename, 'w')
             f.write('bearer_token={}'.format(token))
