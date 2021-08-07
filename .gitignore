@@ -1,0 +1,16 @@
+.idea
+__pycache__
+.pytest_cache
+logs
+design
+reports
+bearer_token.txt
+*.json
+*.csv
+*.pdf
+*.jpg
+
+!examples/twitter_profile.csv
+!examples/twitter_tweets.csv
+!examples/twitter.json
+!examples/twitter.pdf
