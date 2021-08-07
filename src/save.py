@@ -41,7 +41,7 @@ class Save:
         filename = self._add_file_extension(filename, 'csv')
         profile_file = filename[:-4]+'_profile'+filename[-4:]
         tweet_file = filename[:-4]+'_tweets'+filename[-4:]
-        if tweets == {'empty': True}: # TODO: FIX THIS THING
+        if tweets == {'empty': True}:
             print('Saving profile=>{}'.format(profile_file))
         else:
             print('Saving profile=>{} and tweets=>{}'.format(profile_file, tweet_file))
@@ -57,12 +57,12 @@ class Save:
                     ['Description:', profile['description']],
                     ['Profile img:', profile['profile_image_url']],
                     ['Verified:', profile['verified']],
-                    ['Followers:', profile['public_metrics']['followers_count']],
-                    ['Following:', profile['public_metrics']['following_count']]
+                    ['Followers:', profile['followers']],
+                    ['Following:', profile['following']]
                 ]
             )
         # Save tweets
-        if tweets != {'empty': True}: # TODO: FIX THIS THING
+        if tweets != {'empty': True}:
             with open('reports/'+tweet_file, 'w', newline='', encoding='utf-8') as f:
                 w = csv.writer(f)
                 columns = ['Tweeted at', 'Text', 'Retweets', 'Replies', 'Coordinates']
