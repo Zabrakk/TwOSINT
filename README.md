@@ -11,6 +11,9 @@ The obtained information is then saved in one of the three provided formats. The
 What is saved from the data provided by Twitter's API is different for all of the three formats.
 However, to get the most bang for your buck, use the JSON format.
 
+### Acknowledgement
+I would like to thank [Jaskaskaskas](https://github.com/Jaskaskaskas) for participating in the creation of an earlier iteration of TwOSINT.
+
 ### Getting Started
 In order for TwOSINT to work, you must provide it with you Twitter API bearer token.
 The token can be obtained from [Twitter's Developer Platform](https://developer.twitter.com/en/docs/twitter-api/getting-started/getting-access-to-the-twitter-api),
