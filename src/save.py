@@ -4,7 +4,7 @@ import csv
 import json
 from fpdf import FPDF
 
-from constants import profile_field_names
+from src.constants import profile_field_names
 
 
 class Save:
