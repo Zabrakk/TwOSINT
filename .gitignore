@@ -9,3 +9,8 @@ bearer_token.txt
 *.csv
 *.pdf
 *.jpg
+
+!examples/twitter_profile.csv
+!examples/twitter_tweets.csv
+!examples/twitter.json
+!examples/twitter.pdf

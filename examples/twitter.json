@@ -1,0 +1,147 @@
+{
+    "name": "Twitter",
+    "description": "what\u2019s happening?!",
+    "id": "783214",
+    "created_at": "2007-02-20T14:35:54.000Z",
+    "profile_image_url": "https://pbs.twimg.com/profile_images/1354479643882004483/Btnfm47p_normal.jpg",
+    "verified": true,
+    "url": "https://t.co/DAtOo6uuHk",
+    "username": "Twitter",
+    "location": "everywhere",
+    "followers": 59511386,
+    "following": 0,
+    "tweets": [
+        {
+            "created_at": "2021-08-03T17:24:55.000Z",
+            "author_id": "783214",
+            "public_metrics": {
+                "retweet_count": 13406,
+                "reply_count": 4067,
+                "like_count": 75577,
+                "quote_count": 6454
+            },
+            "text": "if you see a Fleet no you didn't https://t.co/4rKI7f45PL",
+            "id": "1422609438557491205",
+            "lang": "en",
+            "referenced_tweets": [
+                {
+                    "type": "quoted",
+                    "id": "1415362679095635970"
+                }
+            ],
+            "entities": {
+                "urls": [
+                    {
+                        "start": 33,
+                        "end": 56,
+                        "url": "https://t.co/4rKI7f45PL",
+                        "expanded_url": "https://twitter.com/Twitter/status/1415362679095635970",
+                        "display_url": "twitter.com/Twitter/status\u2026"
+                    }
+                ]
+            }
+        },
+        {
+            "created_at": "2021-07-16T15:46:33.000Z",
+            "author_id": "783214",
+            "public_metrics": {
+                "retweet_count": 2451,
+                "reply_count": 2275,
+                "like_count": 29478,
+                "quote_count": 395
+            },
+            "text": "https://t.co/VpfGjBO7LF",
+            "id": "1416061700672040964",
+            "lang": "und",
+            "entities": {
+                "urls": [
+                    {
+                        "start": 0,
+                        "end": 23,
+                        "url": "https://t.co/VpfGjBO7LF",
+                        "expanded_url": "https://twitter.com/Twitter/status/1416061700672040964/photo/1",
+                        "display_url": "pic.twitter.com/VpfGjBO7LF"
+                    }
+                ]
+            },
+            "attachments": {
+                "media_keys": [
+                    "3_1416061698759401474"
+                ]
+            }
+        },
+        {
+            "created_at": "2021-07-14T17:28:53.000Z",
+            "entities": {
+                "annotations": [
+                    {
+                        "start": 15,
+                        "end": 20,
+                        "probability": 0.3512,
+                        "type": "Place",
+                        "normalized_text": "Fleets"
+                    }
+                ]
+            },
+            "author_id": "783214",
+            "public_metrics": {
+                "retweet_count": 80655,
+                "reply_count": 29339,
+                "like_count": 515178,
+                "quote_count": 125591
+            },
+            "text": "we're removing Fleets on August 3, working on some new stuff\n\nwe're sorry or you're welcome",
+            "id": "1415362679095635970",
+            "lang": "en"
+        },
+        {
+            "created_at": "2021-07-09T16:05:33.000Z",
+            "author_id": "783214",
+            "public_metrics": {
+                "retweet_count": 8229,
+                "reply_count": 2889,
+                "like_count": 52646,
+                "quote_count": 1029
+            },
+            "text": "are we tired? yes! \nare we tired of talking about it? no!",
+            "id": "1413529769187188739",
+            "lang": "en"
+        },
+        {
+            "created_at": "2021-06-30T13:25:01.000Z",
+            "author_id": "783214",
+            "public_metrics": {
+                "retweet_count": 2626,
+                "reply_count": 5909,
+                "like_count": 12478,
+                "quote_count": 613
+            },
+            "text": "First Born\n\nCheck in on your Tweets. https://t.co/qrKHOeVxtU",
+            "id": "1410227877820436482",
+            "lang": "en",
+            "referenced_tweets": [
+                {
+                    "type": "replied_to",
+                    "id": "1410227855703908353"
+                }
+            ],
+            "in_reply_to_user_id": "783214",
+            "entities": {
+                "urls": [
+                    {
+                        "start": 37,
+                        "end": 60,
+                        "url": "https://t.co/qrKHOeVxtU",
+                        "expanded_url": "https://twitter.com/Twitter/status/1410227877820436482/photo/1",
+                        "display_url": "pic.twitter.com/qrKHOeVxtU"
+                    }
+                ]
+            },
+            "attachments": {
+                "media_keys": [
+                    "16_1410220125865848835"
+                ]
+            }
+        }
+    ]
+}
