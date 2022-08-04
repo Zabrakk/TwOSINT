@@ -4,6 +4,7 @@ import argparse
 # TwOSINT files
 from src.utils import create_folder
 from src.argument_parser import get_parser
+from src.argument_validator import validate_args
 from src.authentication import Authentication
 from src.api_handler import APIHandler
 from src.save import Save
@@ -25,6 +26,10 @@ if __name__ == '__main__':
     auth = Authentication(args.save_token)
     # Check that a bearer token is available
     auth.get_token(args.token)
+
+    # Check that optional parameters provided by the user are correct
+    if not validate_args(args):
+        sys.exit(1)
 
     # Set output filename to target if no output name was provided by user
     if args.output is None:
