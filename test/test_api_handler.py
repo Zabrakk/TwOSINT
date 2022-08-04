@@ -28,7 +28,7 @@ def test_decide_num_to_get():
     assert api_handler.decide_num_to_get(801, include_replies=False) == (800, 100)
 
 
-def test_check_time_format():
+def testcheck_time_format():
     # Valid times
     assert api_handler.check_time_format('2020-15-15T10:10:52Z')
     assert api_handler.check_time_format('2020-10-10T10:10:52Z')
@@ -129,7 +129,7 @@ def test_append_response_json():
         'includes': []
     }
     # All values present, no includes
-    resonse_json = {
+    response_json = {
         'data': [
             {'test': 't'}, {'test2': 't2'}
         ],
@@ -137,12 +137,12 @@ def test_append_response_json():
             {'t': 't'}
         ]
     }
-    result = api_handler.append_response_json(data, resonse_json)
+    result = api_handler.append_response_json(data, response_json)
     assert len(result['tweets']) == 2
     assert len(result['others_tweets']) == 1
     assert len(result['includes']) == 0
     # All values present, no tweets
-    resonse_json = {
+    response_json = {
         'data': [
             {'test': 't'}
         ],
@@ -150,22 +150,22 @@ def test_append_response_json():
             {'include1': 'i1'}
         ]
     }
-    result = api_handler.append_response_json(data, resonse_json)
+    result = api_handler.append_response_json(data, response_json)
     assert len(result['tweets']) == 3
     assert len(result['others_tweets']) == 1
     assert len(result['includes']) == 1
     # Only tweets present
-    resonse_json = {
+    response_json = {
         'data': [
             {'test': 't'}
         ]
     }
-    result = api_handler.append_response_json(data, resonse_json)
+    result = api_handler.append_response_json(data, response_json)
     assert len(result['tweets']) == 4
     assert len(result['others_tweets']) == 1
     assert len(result['includes']) == 1
     # All values present
-    resonse_json = {
+    response_json = {
         'data': [
             {'test': 't'}
         ],
@@ -176,7 +176,7 @@ def test_append_response_json():
             {'include1': 'i1'}
         ]
     }
-    result = api_handler.append_response_json(data, resonse_json)
+    result = api_handler.append_response_json(data, response_json)
     assert len(result['tweets']) == 5
     assert len(result['others_tweets']) == 2
     assert len(result['includes']) == 2
