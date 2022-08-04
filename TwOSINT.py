@@ -2,6 +2,7 @@ import sys
 import logging
 import argparse
 # TwOSINT files
+from src.utils import create_folder
 from src.argument_parser import get_parser
 from src.authentication import Authentication
 from src.api_handler import APIHandler
@@ -11,6 +12,10 @@ This is the entry point to TwOSINT
 """
 
 if __name__ == '__main__':
+    # Ensure that logging and reports folders exists
+    create_folder('logs/')
+    create_folder('reports/')
+
     # Initialize logging
     logging.basicConfig(format='%(asctime)s %(name)s: %(message)s', level=logging.INFO,
                         datefmt='%H:%M:%S', filename='logs/log.txt', filemode='w')
