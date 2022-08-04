@@ -79,6 +79,11 @@ Enter your Bearer Token:
 
 ### Save Formats
 As stated previously, TwOSINT supports saving to CSV, JSON and PDF files.
+```bash
+$ python3 TwOSINT.py twitter -f json  # Save as json
+$ python3 TwOSINT.py twitter -f pdf   # Save as pdf
+$ python3 TwOSINT.py twitter -f csv   # Save as csv
+```
 
 Saving to CSV generates two different files, i.e., **<filename>_profile.csv** and **<filename>_tweets.csv**.<br/>
 *_profile.csv is formatted as follows:
