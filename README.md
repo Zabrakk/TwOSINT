@@ -1,5 +1,7 @@
 # TwOSINT - A Python Twitter OSINT tool
 
+**NOT MAINTAINED, JUST ARCHIVED**
+
 **Note:** _This tool is not meant any serious use, as it uses the Twitter API requiring the user to provide their **Bearer Token**._<br/>
 
 TwOSINT is a Twitter OSINT tool created with Python. It obtains the profile information and up to 3200 tweets from a target Twitter user.
